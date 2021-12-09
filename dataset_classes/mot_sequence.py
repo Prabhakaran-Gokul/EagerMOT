@@ -97,6 +97,10 @@ class MOTSequence(ABC):
         """ Return a list of bbox.Bbox3d for the requested frame"""
         if not self.dets_3d_per_frame:
             self.dets_3d_per_frame = self.load_detections_3d()
+        # with open('det_3d.txt', 'w') as f:
+        #     for key in self.dets_3d_per_frame.keys():
+        #         f.write(key)
+        #         f.write('\n')
         return self.dets_3d_per_frame.get(frame_name, [])
 
     ##########################################################

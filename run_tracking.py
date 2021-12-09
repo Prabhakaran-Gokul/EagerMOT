@@ -25,7 +25,7 @@ def perform_tracking_full(dataset, params, target_sequences=[], sequences_to_exc
     total_time_tracking = 0
     total_time_fusion = 0
     total_time_reporting = 0
-
+    print (target_sequences)
     for sequence_name in target_sequences:
         if len(sequences_to_exclude) > 0:
             if sequence_name in sequences_to_exclude:
@@ -134,7 +134,7 @@ def perform_tracking_with_params(dataset, params,
 
 
 def run_on_nuscenes():
-    VERSION = "v1.0-trainval"
+    VERSION = "v1.0-mini"
     mot_dataset = MOTDatasetNuScenes(work_dir=NUSCENES_WORK_DIR,
                                      det_source=input_utils.CENTER_POINT,
                                      seg_source=input_utils.MMDETECTION_CASCADE_NUIMAGES,
@@ -172,5 +172,5 @@ def run_on_kitti():
 
 
 if __name__ == "__main__":
-    # run_on_nuscenes()
-    run_on_kitti()
+    run_on_nuscenes()
+    #run_on_kitti()

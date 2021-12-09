@@ -38,7 +38,7 @@ def add_results_to_submit(submission: Dict[str, Dict[str, Any]], frame_token: st
     for instance in predicted_instances:
         if instance.report_mot:
             submission["results"][frame_token].append(build_results_dict(instance, frame_token))
-
+    
     if len(submission["results"][frame_token]) == 0:
         print(f"Nothing tracked for {frame_token}")
 

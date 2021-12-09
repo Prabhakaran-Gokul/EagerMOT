@@ -28,14 +28,17 @@ MMDETECTION_CASCADE_NUIMAGES = 'mmdetection_cascade_nuimages'
 # Edit paths to point to where you store 3D and 2D detections / segmentations on your machine
 POINTGNN_DETS_DIR = MOUNT_PATH + "/storage/pointgnn/" + SPLIT
 DETECTIONS_AB3DMOT = MOUNT_PATH + "/storage/ab3dmot/" + SPLIT
-DETECTIONS_EFFICIENT_DET_NUSCENES = MOUNT_PATH + "/storage/efficientdet/" + SPLIT
-DETECTIONS_CENTER_POINT_NUSCENES = MOUNT_PATH + "/storage/centerpoint/" + SPLIT
+DETECTIONS_EFFICIENT_DET_NUSCENES = MOUNT_PATH + "/storage/efficientdet" + SPLIT
+DETECTIONS_CENTER_POINT_NUSCENES = MOUNT_PATH + "/hpctmp/e0273900/detections/centerpoint/" + SPLIT
+
+#DETECTIONS_EFFICIENT_DET_NUSCENES = MOUNT_PATH + "/storage/efficientdet/" + SPLIT
+#DETECTIONS_CENTER_POINT_NUSCENES = MOUNT_PATH + "/storage/centerpoint/" + SPLIT
 
 SEGMENTATIONS_TRACKRCNN_DIR = MOUNT_PATH + "/storage/trackrcnn/" + SPLIT
 MOTSFUSION_RRC_DIR = MOUNT_PATH + "/storage/detections_segmentations_RRC_BB2SegNet/" + SPLIT
 MOTSFUSION_TRACKRCNN_DIR = MOUNT_PATH + "/storage/detections_segmentations_trackrcnn_BB2SegNet/" + SPLIT
 DETECTIONS_MMDETECTION_CASCADE_NUIMAGES_NUSCENES = MOUNT_PATH + \
-    "/storage/mmdetection_cascade_x101/" + SPLIT
+    "/hpctmp/e0273900/detections/mmdetection_cascade_x101/" + SPLIT
 DETECTIONS_MMDETECTION_CASCADE_NUIMAGES_KITTI = MOUNT_PATH + \
     "/storage/mmdetection_cascade_x101_kitti/" + SPLIT
 
@@ -143,6 +146,7 @@ def load_json_for_sequence(folder_path: str, target_seq_name: str) -> Dict:
     # Parse sequences
     filepath = None
     for scene_json in os.listdir(folder_dir):
+        #print(f"{scene_json}")
         if scene_json.startswith(target_seq_name):
             filepath = os.path.join(folder_dir, scene_json)
             break

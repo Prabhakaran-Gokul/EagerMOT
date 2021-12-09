@@ -98,17 +98,23 @@ def confidence_distribution_for_detections(detections_per_frame):
 
 
 def load_detections_centerpoint() -> Dict[str, List[Bbox3d]]:
-    filepath = os.path.join(utils.DETECTIONS_CENTER_POINT_NUSCENES, "detections.json")
+    filepath = os.path.join(utils.DETECTIONS_CENTER_POINT_NUSCENES, "detections_online.json")
     print(f"Parsing {filepath}")
     with open(filepath, 'r') as f:
         full_results_json = json.load(f)
 
     all_detections = full_results_json["results"]
     all_frames_to_bboxes: Dict[str, List[Bbox3d]] = {}
+    all_tks = []
     for frame_token, frame_dets in all_detections.items():
         assert frame_token not in all_frames_to_bboxes
+        all_tks.append(frame_token)
         all_frames_to_bboxes[frame_token] = [Bbox3d.from_nu_det(det) for det in frame_dets
                                              if det["detection_name"] in nu_classes.ALL_NUSCENES_CLASS_NAMES]
+    # with open('load.txt', 'w') as f:
+    #     for key in all_tks:
+    #         f.write(key)
+    #         f.write('\n')
     return all_frames_to_bboxes
 
 

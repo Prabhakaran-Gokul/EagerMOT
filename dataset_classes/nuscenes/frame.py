@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
-from typing import Optional, List, Callable, Iterable, Dict
+from tkinter.messagebox import NO
+from typing import Optional, List, Callable, Iterable, Dict, Tuple
 from collections import defaultdict
 
 import matplotlib.image as mpimg
@@ -11,6 +12,7 @@ from inputs.detection_2d import Detection2D
 from inputs.bbox import Bbox2d, Bbox3d
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.data_classes import LidarPointCloud
+from nuscenes.utils.data_classes import RadarPointCloud
 from nuscenes.eval.common.utils import quaternion_yaw
 from utils.utils_geometry import clip_bbox_to_four_corners
 
@@ -57,6 +59,35 @@ class MOTFrameNuScenes(MOTFrame):
         lidar_filepath = os.path.join(self.nusc.dataroot, lidar_data["filename"])
         nu_pcd: LidarPointCloud = LidarPointCloud.from_file(lidar_filepath)
         return nu_pcd.points[:3].T
+
+    def load_radar_points(self) -> Tuple(np.ndarray, np.ndarray):
+        radar_sensors = ["RADAR_FRONT", "RADAR_FRONT_RIGHT", "RADAR_FRONT_LEFT", "RADAR_BACK_RIGHT", "RADAR_BACK_LEFT"]
+        all_radar_points_in_world, all_radar_velocities_in_world = None, None
+
+        for radar_sensor in radar_sensors:
+
+            radar_data = self.nusc.get('sample_data', self.data[radar_sensor])
+            assert radar_data["is_key_frame"]
+            radar_filepath = os.path.join(self.nusc.dataroot, radar_data["filename"])
+            nu_pcd: RadarPointCloud = RadarPointCloud.from_file(radar_filepath, invalid_states=range(18), dynprop_states=range(8), ambig_states=range(5))
+            #move from radar frame to Nuscenes world frame
+            radar_points_in_world = self.transformation.world_from_radar(nu_pcd.points.T[:, 0:3], self.data, radar_sensor)
+            if all_radar_points_in_world is None:
+                all_radar_points_in_world = radar_points_in_world
+            else:
+                all_radar_velocities_in_world = np.vstack((all_radar_points_in_world, radar_points_in_world))
+            
+            #get radar velocities in Nuscenes world frame
+            velocities = nu_pcd.points.T[:, 8:10] 
+            zeroes = np.zeros((velocities.shape[0], 1), velocities.dtype)
+            velocities = np.append(velocities, zeroes, axis=1)
+            radar_velocities_in_world = self.transformation.world_from_radar_velocity(velocities, self.data, radar_sensor)
+            if all_radar_velocities_in_world is None:
+                all_radar_velocities_in_world = radar_velocities_in_world
+            else:
+                all_radar_velocities_in_world = np.vstack((all_radar_velocities_in_world, radar_velocities_in_world))
+
+        return all_radar_points_in_world, all_radar_velocities_in_world
 
     @property
     def points_world(self) -> np.ndarray:

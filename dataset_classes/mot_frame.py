@@ -1,4 +1,5 @@
 from __future__ import annotations
+from lib2to3.pytree import Node
 import os
 import time
 from abc import ABC, abstractmethod
@@ -17,6 +18,9 @@ from tracking.data_association import match_3d_2d_detections, match_multicam, Ca
 from utils import utils_viz, io
 from utils.utils_geometry import clip_bbox_to_four_corners
 from transform.transformation import Transformation
+from transform.nuscenes import convert_kitti_bbox_coordinates_to_nu, nuscenes_to_kitti
+from nuscenes.utils.data_classes import Box
+
 
 
 """ We have three basic classes: Dataset, Sequence, Frame """
@@ -42,6 +46,8 @@ class MOTFrame(ABC):
         self._raw_pcd = None
         self._points_rect = None
         self.data = None
+        self._radar_pcd = None
+        self._radar_velocities = None
 
     @property
     def transformation(self) -> Transformation:
@@ -132,8 +138,15 @@ class MOTFrame(ABC):
         """ Creates FusedInstance objects given ids of detections that were fused/not fused 
         This method does not have any logic, jst sets attributes
         """
+        # not_done = True
         for det_id, (cam, det_2d_id) in matched_indices.items():  # construct fully fused instances
             bbox_3d = self.bboxes_3d[det_id]
+            radar_vel = self.get_radar_points_in_bbox3d(bbox_3d)
+            if radar_vel is not None:
+                bbox_3d.velocity = radar_vel
+            # if not_done:
+            #     print(self.get_radar_points_in_bbox3d(bbox_3d))
+            #     not_done = False
             detection_2d = self.dets_2d_multicam[cam][det_2d_id]
             assert bbox_3d.seg_class_id == detection_2d.seg_class_id, \
                 f'3D class is {SEG_TO_TRACK_CLASS[bbox_3d.seg_class_id]}, 2D is {SEG_TO_TRACK_CLASS[detection_2d.seg_class_id]}'
@@ -146,6 +159,9 @@ class MOTFrame(ABC):
 
         for det_3d_id in unmatched_det_ids:
             bbox_3d = self.bboxes_3d[det_3d_id]
+            radar_vel = self.get_radar_points_in_bbox3d(bbox_3d)
+            if radar_vel is not None:
+                bbox_3d.velocity = radar_vel
             current_object = FusedInstance(len(self.fused_instances),
                                            class_id=bbox_3d.seg_class_id, bbox_3d=bbox_3d)
             current_object.source = Source.DET
@@ -198,7 +214,48 @@ class MOTFrame(ABC):
         return self.instance_fusion_bbox_dir % (*self.det_score_thresholds, *self.seg_score_thresholds, *params["fusion_iou_threshold"])
 
     ##########################################################
+    # Check for radar points in box3d
+    def get_radar_points_in_bbox3d(self, bbox3d: Bbox3d):
+        #convert bbox3d 8 corner points from kitti to nu world frame
+        bbox_coordinates = bbox3d.original_coordinates # (x y z rotation-around-y l w h)
+        rearranged = np.array([bbox_coordinates[6], bbox_coordinates[5], bbox_coordinates[4],
+        bbox_coordinates[0], bbox_coordinates[1], bbox_coordinates[2], bbox_coordinates[3]]) # coordinates: [h, w, l, x, y, z, theta] 
+        center, wlh, rotation = convert_kitti_bbox_coordinates_to_nu(rearranged)
+        box = Box(center, wlh, rotation)
+        corners = box.corners()
+        corners = np.transpose(corners)
+
+        #imaginary x-axis for bbox
+        box_x_axis = np.subtract(corners[6, 0:2], corners[7, 0:2])
+        #imaginary y-axis for bbox
+        box_y_axis = np.subtract(corners[3, 0:2], corners[7, 0:2])
+
+        #check if any radar point is within the bbox. Ignore z axis 
+        rps = self.radar_pcd[:, 0:2]
+        for index, rp in enumerate(rps):
+            # print (rp, corners[7, 0:2])
+            rp_wrt_pt8 = np.subtract(rp, corners[7, 0:2])
+            within_x_axis = 0 < np.dot(rp_wrt_pt8, box_x_axis) < np.dot(box_x_axis, box_x_axis)
+            within_y_axis = 0 < np.dot(rp_wrt_pt8, box_y_axis) < np.dot(box_y_axis, box_y_axis)
+            if (within_x_axis and within_y_axis):
+                radar_velocity_in_kitti = nuscenes_to_kitti(self._radar_velocities[index].reshape(1, 3)).reshape(-1,)
+
+                return radar_velocity_in_kitti[:2] # velocity of the correspoding point in bbox wrt kitti frame
+
+        return None
+
+    ##########################################################
     # Lazy loading
+
+    @property
+    def radar_pcd(self):  # {data:x, extrinsic:x }
+        """ @return point cloud float64 numpy array shape=(n, 3), reflectance [0, 0.99] """
+        if self._radar_pcd is None:
+            try:
+                self._radar_pcd, self._radar_velocities = self.load_radar_points()
+            except FileNotFoundError:
+                print(f'No point cloud for frame {self.name}')
+        return self._radar_pcd
 
     @property
     def raw_pcd(self):  # {data:x, extrinsic:x }
@@ -296,6 +353,9 @@ class MOTFrame(ABC):
 
     ##########################################################
     # Required methods and fields
+    # @abstractmethod
+    def load_radar_points(self) -> np.ndarray:
+        " Nx3 points"
 
     @abstractmethod
     def get_image_original(self, cam: str):

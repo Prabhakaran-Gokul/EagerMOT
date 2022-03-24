@@ -98,6 +98,37 @@ class TransformationNuScenes(Transformation):
         ego_pose_data = self.nusc.get('ego_pose', lidar_data['ego_pose_token'])
         return transform_points_with_pose(ego_points, ego_pose_data)
 
+    def world_from_radar(self, radar_points: np.ndarray, frame_data: Mapping, sensor_name: str) -> np.ndarray:
+        """
+        :param radar_points: Nx3 points as np.ndarray
+        :return: [world 3D points centered around origin] and [original mean point in world frame]
+        """
+        # from radar frame to ego frame
+        radar_data = self.nusc.get('sample_data', frame_data[sensor_name])
+        ego_points = self.radar_to_ego(radar_points, radar_data)
+
+        # from ego frame to world frame
+        ego_pose_data = self.nusc.get('ego_pose', radar_data['ego_pose_token'])
+        return transform_points_with_pose(ego_points, ego_pose_data)
+
+    def world_from_radar_velocity(self, radar_vel_points: np.ndarray, frame_data: Mapping, sensor_name: str) -> np.ndarray:
+        """
+        :param radar_vel points: Nx2 points as np.ndarray
+        :return: [world 3D points centered around origin] and [original mean point in world frame]
+        """
+        # from radar frame to ego frame
+        radar_data = self.nusc.get('sample_data', frame_data[sensor_name])
+        ego_points = self.radar_to_ego_vel(radar_vel_points, radar_data)
+
+        # # from ego frame to world frame
+        ego_pose_data = self.nusc.get('ego_pose', radar_data['ego_pose_token'])
+
+        return transform_points_with_orientation(ego_points, ego_pose_data)
+
+    def radar_to_ego_vel(self, radar_points: np.ndarray, radar_data: Mapping) -> np.ndarray:
+        radar_sensor_data = self.nusc.get('calibrated_sensor', radar_data['calibrated_sensor_token'])
+        return transform_points_with_orientation(radar_points, radar_sensor_data)
+
     def ego_box_from_world(self, bbox: Box, frame_data: Mapping) -> np.ndarray:
         """
         :param bbox: NuScenes.Box object read from annotations in world coordinates
@@ -113,9 +144,18 @@ class TransformationNuScenes(Transformation):
         return transform_points_with_pose(lidar_points, lidar_sensor_data)
 
 
+    def radar_to_ego(self, radar_points: np.ndarray, radar_data: Mapping) -> np.ndarray:
+        radar_sensor_data = self.nusc.get('calibrated_sensor', radar_data['calibrated_sensor_token'])
+        return transform_points_with_pose(radar_points, radar_sensor_data)
+
+
 def transform_points_with_pose(points: np.ndarray, pose_data: Mapping) -> np.ndarray:
     result = points @ Quaternion(pose_data['rotation']).rotation_matrix.T
     result += np.array(pose_data['translation'])
+    return result
+
+def transform_points_with_orientation(points: np.ndarray, pose_data: Mapping) -> np.ndarray:
+    result = points @ Quaternion(pose_data['rotation']).rotation_matrix.T
     return result
 
 

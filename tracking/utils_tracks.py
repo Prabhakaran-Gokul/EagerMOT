@@ -63,7 +63,7 @@ def default_kf_3d(is_angular: bool) -> KalmanFilter:
                          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
                          [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]])
     else:
-        kf = KalmanFilter(dim_x=10, dim_z=7)  # [x,y,z,theta,l,w,h] + [vx, vy, vz]
+        kf = KalmanFilter(dim_x=10, dim_z=9)  # [x,y,z,theta,l,w,h] + [vx, vy, vz]
         kf.F = np.array([[1, 0, 0, 0, 0, 0, 0, 1, 0, 0],  # state transition matrix
                          [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
                          [0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
@@ -75,17 +75,31 @@ def default_kf_3d(is_angular: bool) -> KalmanFilter:
                          [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]])
 
+        # kf.H = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # measurement function,
+        #                  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        #                  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        #                  [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+        #                  [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        #                  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        #                  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]])
+
         kf.H = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # measurement function,
                          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
                          [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
                          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
                          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-                         [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]])
+                         [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                         [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                         [0, 0, 0, 0, 0, 0, 0, 0, 1, 0]])
 
     # state uncertainty, give high uncertainty to the unobservable initial velocities, covariance matrix
-    kf.P[7:, 7:] *= 1000.
+    kf.P[9:, 9:] *= 1000.
+    # kf.P[7:9, 7:9] *= 0.1
+    # kf.P[7:, 7:] *= 1000
     kf.P *= 10.
-    kf.Q[7:, 7:] *= 0.01
+    # kf.Q[7:, 7:] *= 0.01
+    kf.Q[9:, 9:] *= 0.01
     kf.R *= 0.01  # measurement uncertainty (own addition)
+
     return kf

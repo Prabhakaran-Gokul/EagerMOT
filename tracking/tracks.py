@@ -50,6 +50,8 @@ class Track(ProjectsToCam):
         assert bbox3d is not None
         self.kf_3d = utils.default_kf_3d(self.is_angular)
         self.kf_3d.x[:7] = bbox3d.kf_coordinates.reshape(7, 1)
+        if bbox3d.velocity is not None:
+            self.kf_3d.x[7:9] = bbox3d.velocity.reshape(2,1)
         self._set_info(bbox3d)
 
     def _set_info(self, bbox3d):

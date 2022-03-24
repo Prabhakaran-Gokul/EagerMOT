@@ -30,6 +30,7 @@ POINTGNN_DETS_DIR = MOUNT_PATH + "/storage/pointgnn/" + SPLIT
 DETECTIONS_AB3DMOT = MOUNT_PATH + "/storage/ab3dmot/" + SPLIT
 DETECTIONS_EFFICIENT_DET_NUSCENES = MOUNT_PATH + "/storage/efficientdet" + SPLIT
 DETECTIONS_CENTER_POINT_NUSCENES = MOUNT_PATH + "/hpctmp/e0273900/detections/centerpoint/" + SPLIT
+DETECTIONS_CENTER_POINT_NUSCENES = MOUNT_PATH + "C:\\Users\\prabh\\Documents\\Y4Sem1\\FYP\\detections\\centerpoint\\" + SPLIT #for windows
 
 #DETECTIONS_EFFICIENT_DET_NUSCENES = MOUNT_PATH + "/storage/efficientdet/" + SPLIT
 #DETECTIONS_CENTER_POINT_NUSCENES = MOUNT_PATH + "/storage/centerpoint/" + SPLIT
@@ -41,6 +42,8 @@ DETECTIONS_MMDETECTION_CASCADE_NUIMAGES_NUSCENES = MOUNT_PATH + \
     "/hpctmp/e0273900/detections/mmdetection_cascade_x101/" + SPLIT
 DETECTIONS_MMDETECTION_CASCADE_NUIMAGES_KITTI = MOUNT_PATH + \
     "/storage/mmdetection_cascade_x101_kitti/" + SPLIT
+DETECTIONS_MMDETECTION_CASCADE_NUIMAGES_NUSCENES = MOUNT_PATH + \
+    "C:\\Users\\prabh\\Documents\\Y4Sem1\\FYP\\detections\\mmdetection_cascade_x101\\" + SPLIT #for windows
 
 ########################################3333
 

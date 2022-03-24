@@ -5,9 +5,9 @@ from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.data_classes import Box
 from nuscenes.utils.splits import create_splits_scenes
 
-import open3d as o3d
-import open3d.visualization.gui as gui
-import open3d.visualization.rendering as rendering
+# import open3d as o3d
+# import open3d.visualization.gui as gui
+# import open3d.visualization.rendering as rendering
 
 import numpy as np
 from typing import List, Mapping
@@ -471,12 +471,12 @@ def combine_vids(twoD_vid, threeD_vid, scene_num):
 
 
 
-# vs = Visualise()
+vs = Visualise()
 # frame = "b4ff30109dd14c89b24789dc5713cf8c"
 # vs.show_frame_3d(frame)
 # vs.show_3d_vid(scene_name="scene-0916") 
 # vs.show_frame_2d(frame, "CAM_BACK")
-# vs.show_2d_vid(scene_name="scene-0916", cam="CAM_FRONT")
+vs.show_2d_vid(scene_name="scene-0916", cam="CAM_FRONT")
 # vs.show_2d_vid(scene_name="scene-0103", cam="CAM_BACK_RIGHT") 
 
-combine_vids("scene-0916_CAM_FRONT.avi", "3d_scene-0916.mp4", scene_num="0916")
+# combine_vids("scene-0916_CAM_FRONT.avi", "3d_scene-0916.mp4", scene_num="0916")
